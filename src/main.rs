@@ -45,13 +45,13 @@ fn main() {
                             .output()
                             .expect("Error");
 
-                        let result: Result = Result { stdout: String::from_utf8_lossy(&output.stdout).to_string(), stderr: String::from_utf8_lossy(&output.stderr).to_string(), success: output.status.success() };
+                        let result: Result = Result { stdout: String::from_utf8_lossy(&output.stdout).to_string(), stderr: String::from_utf8_lossy(&output.stderr).to_string(), success: true };
                         Response::text(serde_json::to_string(&result).unwrap())
                     } else {
-                        Response::text("invalid totp")
+                        Response::text("{\"content\": \"Invalid TOTP Code\", \"success\": false}")
                     }
                 } else {
-                    Response::text("{\"success\": false}")
+                    Response::text("{\"content\": \"Method not allowed\", \"success\": false}")
                 }
             });
         } else {
