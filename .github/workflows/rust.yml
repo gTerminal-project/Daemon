@@ -1,0 +1,71 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-linux:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup
+      run: sudo apt-get install libudev-dev
+    - name: Build Linux
+      run: cargo build --release --verbose
+    - name: Run tests
+      run: cargo test --verbose
+    - name: Prepare upload
+      run: mkdir "build" && mv "target/release/crs" "build/gterminal-daemon_linux_x86_64"
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: "Linux"
+        path: "build/*"
+
+  build-windows:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup
+      run: sudo apt-get install libudev-dev && rustup target add x86_64-pc-windows-gnu && sudo apt-get install gcc-mingw-w64-x86-64
+    - name: Build Windows
+      run: cargo build --release --target x86_64-pc-windows-gnu --verbose
+    - name: Run tests
+      run: cargo test --verbose
+    - name: Prepare upload
+      run: mkdir "build" && mv "target/x86_64-pc-windows-gnu/release/daemon.exe" "build/gterminal-daemon_windows_x86_64.exe"
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: "Windows"
+        path: "build/*"
+
+  build-macOS:
+
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build x86_x64
+      run: cargo build --release --verbose
+    - name: Build Apple Silicon
+      run: rustup target add aarch64-apple-darwin && cargo build --release --target aarch64-apple-darwin --verbose
+    - name: Run tests
+      run: cargo test --verbose
+    - name: Prepare upload
+      run: mkdir "build" && mv "target/release/daemon" "build/gterminal-daemon_macos_x86_64" && mv "target/aarch64-apple-darwin/release/daemon" "build/gterminal-daemon_macos_arm"
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@v3.1.2
+      with:
+        name: "macOS"
+        path: "build/*"
