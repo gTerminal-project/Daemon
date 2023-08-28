@@ -18,6 +18,7 @@ struct Data {
 struct Result {
     stdout: String,
     stderr: String,
+	command_success: bool,
     success: bool
 }
 
@@ -45,7 +46,7 @@ fn main() {
                             .output()
                             .expect("Error");
 
-                        let result: Result = Result { stdout: String::from_utf8_lossy(&output.stdout).to_string(), stderr: String::from_utf8_lossy(&output.stderr).to_string(), success: true };
+                        let result: Result = Result { stdout: String::from_utf8_lossy(&output.stdout).to_string(), stderr: String::from_utf8_lossy(&output.stderr).to_string(), command_success: output.status.success(), success: true };
                         Response::text(serde_json::to_string(&result).unwrap())
                     } else {
                         Response::text("{\"content\": \"Invalid TOTP Code\", \"success\": false}")
