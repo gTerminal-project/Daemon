@@ -1,0 +1,20 @@
+[package]
+name = "daemon"
+version = "1.0.0"
+authors = ["Pascal Dietrich <pascal.1.dietrich@hotmail.com>"]
+edition = "2021"
+description = "This is the gTerminals daemon, which allows you to run commands on your computer from gTerminal."
+repository = "https://github.com/gTerminal-project/Daemon/"
+license = "GPL-3.0"
+keywords = ["gTerminal", "daemon"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+base32 = "0.4.0"
+keyring = "2.0.5"
+rand = "0.8.5"
+rouille = "3.6.2"
+serde = { version = "1.0.171", features = ["derive"] }
+serde_json = "1.0.105"
+totp-rs = "5.2.0"
