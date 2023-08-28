@@ -23,7 +23,7 @@ jobs:
     - name: Run tests
       run: cargo test --verbose
     - name: Prepare upload
-      run: mkdir "build" && mv "target/release/crs" "build/gterminal-daemon_linux_x86_64"
+      run: mkdir "build" && mv "target/release/daemon" "build/gterminal-daemon_linux_x86_64"
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v3.1.2
       with:
