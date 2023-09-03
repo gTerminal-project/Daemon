@@ -34,26 +34,32 @@ impl HTTPServer {
         rouille::start_server("127.0.0.1:10384", move | request| {
             if request.method() == "POST" {
                 // Get request’s JSON data
-                let data: RequestData = serde_json::from_reader(request.data().unwrap()).expect(&crate::get_string("couldNotParseReqData"));
+                let data = serde_json::from_reader(request.data().unwrap());
 
-                // Get binary name
-                let binary_name: String = env::args().collect::<Vec<String>>().get(0).unwrap().to_owned();
+                if data.is_ok() {
+                    let data: RequestData = data.unwrap();
+                    // Get binary name
+                    let binary_name: String = env::args().collect::<Vec<String>>().get(0).unwrap().to_owned();
 
-                // Check validity of TOTP code
-                if HTTPServer::check_totp_code(&self.entry.get_password().expect(&crate::get_string("noTOTPSecret").format(&[binary_name])), &data.totp) {
-                    // Get command & run it
-                    let command: Vec<&str> = data.command.split_whitespace().collect();
-                    let output = Command::new(&command[0])
-                        .args(&command[1..])
-                        .output()
-                        .unwrap();
+                    // Check validity of TOTP code
+                    if HTTPServer::check_totp_code(&self.entry.get_password().expect(&crate::get_string("noTOTPSecret").format(&[binary_name])), &data.totp) {
+                        // Get command & run it
+                        let command: Vec<&str> = data.command.split_whitespace().collect();
+                        let output = Command::new(&command[0])
+                            .args(&command[1..])
+                            .output()
+                            .unwrap();
 
-                    // Build result JSON & return it
-                    let result: ResultData = ResultData { stdout: String::from_utf8_lossy(&output.stdout).to_string(), stderr: String::from_utf8_lossy(&output.stderr).to_string(), command_success: output.status.success(), success: true };
-                    Response::text(serde_json::to_string(&result).unwrap())
+                        // Build result JSON & return it
+                        let result: ResultData = ResultData { stdout: String::from_utf8_lossy(&output.stdout).to_string(), stderr: String::from_utf8_lossy(&output.stderr).to_string(), command_success: output.status.success(), success: true };
+                        Response::text(serde_json::to_string(&result).unwrap())
+                    } else {
+                        // Return invalid TOTP error
+                        Response::text("{\"content\": \"Invalid TOTP code\", \"success\": false}")
+                    }
                 } else {
-                    // Return invalid TOTP error
-                    Response::text("{\"content\": \"Invalid TOTP code\", \"success\": false}")
+                    // Return could not parse request data error
+                    Response::text(format!("{{\"content\": \"{}\", \"success\": false}}", &crate::get_string("couldNotParseReqData")))
                 }
             } else {
                 // Return method not allowed error
