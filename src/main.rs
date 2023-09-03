@@ -1,74 +1,43 @@
+extern crate r_i18n;
+
+mod servers;
+
+use r_i18n::{I18nConfig, I18n};
+use current_locale;
+use servers::HTTPServer;
 use std::env;
 use rand::Rng;
 use base32;
-use std::time::SystemTime;
-use totp_rs::{Algorithm, TOTP, Secret};
 use keyring::Entry;
-use rouille::Response;
-use std::process::Command;
-use serde::{Deserialize, Serialize};
+use dyn_fmt::AsStrFormatExt;
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Data {
-    command: String,
-    totp: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct Result {
-    stdout: String,
-    stderr: String,
-	command_success: bool,
-    success: bool
-}
-
-fn main() {
-    let args: Vec<String> = env::args().collect();
-
+#[tokio::main]
+async fn main() {
+    // Initialize keyring
     let entry = Entry::new("gTerminal-Daemon", "TOTP-Secret").unwrap();
+
+    // Get cli arguments
+    let args: Vec<String> = env::args().collect();
 
     if args.len() == 2 {
         if args[1] == "pair" {
+            // Generate TOTP secret & save it to keyring
             let totp_secret = generate_totp_secret();
-            entry.set_password(&totp_secret).expect("Could not save TOTP-Secret");
-            println!("Go to gTerminal and run \"pair {}\"", totp_secret);
+            entry.set_password(&totp_secret).expect(&get_string("couldNotSaveTOTPSecret"));
+
+            println!("{}", get_string("pairInstructions").format(&[totp_secret]));
         } else if args[1] == "listen" {
-            rouille::start_server("127.0.0.1:10384", move | request| {
-                if request.method() == "POST" {
-                    let data = request.data().unwrap();
-
-                    let data: Data = serde_json::from_reader(data).unwrap();
-
-                    if check_totp_code(&entry.get_password().unwrap(), &data.totp) {
-                        let command: Vec<&str> = data.command.split_whitespace().collect();
-                        let output = Command::new(&command[0])
-                            .args(&command[1..])
-                            .output()
-                            .expect("Error");
-
-                        let result: Result = Result { stdout: String::from_utf8_lossy(&output.stdout).to_string(), stderr: String::from_utf8_lossy(&output.stderr).to_string(), command_success: output.status.success(), success: true };
-                        Response::text(serde_json::to_string(&result).unwrap())
-                    } else {
-                        Response::text("{\"content\": \"Invalid TOTP Code\", \"success\": false}")
-                    }
-                } else {
-                    Response::text("{\"content\": \"Method not allowed\", \"success\": false}")
-                }
-            });
+            // Init & start HTTP server
+            let http_server = HTTPServer::new(entry);
+            http_server.serve();
         } else {
+            // Show help
             help();
         }
     } else {
-        help()
+        // Show help
+        help();
     }
-}
-
-fn check_totp_code(secret: &str, token: &str) -> bool {
-    let totp = TOTP::new(Algorithm::SHA1, 6, 1, 30, 
-        Secret::Encoded(secret.to_string())
-        .to_bytes().unwrap())
-        .unwrap();
-    (totp.generate_current().unwrap() == token) | (totp.generate(get_unix_time() - totp.step) == token)
 }
 
 fn generate_totp_secret() -> String {
@@ -77,11 +46,15 @@ fn generate_totp_secret() -> String {
     base32::encode(base32::Alphabet::RFC4648 { padding: false }, &data_byte)
 }
 
-fn get_unix_time() -> u64 {
-    match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
-        Ok(n) => n.as_secs(),
-        Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+fn get_string(key: &str) -> String {
+    let config =  I18nConfig{locales: &["en", "de"], directory: "translations"};
+    let mut r_i18n = I18n::configure(&config);
+
+    let lang = current_locale::current_locale().unwrap().split_once("-").unwrap().0.to_string();
+    if config.locales.contains(&lang.as_str()) {
+        r_i18n.set_current_lang(&lang);
     }
+    r_i18n.t(key).to_string()
 }
 
 fn help() {

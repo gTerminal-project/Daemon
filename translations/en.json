@@ -1,0 +1,6 @@
+{
+	"couldNotSaveTOTPSecret": "Could not save TOTP secret.",
+	"pairInstructions": "Open gTerminal and run \"pair {}\"",
+	"couldNotParseReqData": "Could not parse request data.",
+	"noTOTPSecret": "No TOTP secret found. Run \"{} pair\" and then follow the instructions."
+}

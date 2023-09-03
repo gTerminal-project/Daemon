@@ -1,0 +1,6 @@
+{
+	"couldNotSaveTOTPSecret": "Der TOTP-Schlüssel konnte nicht gespeichert werden.",
+	"pairInstructions": "Öffnen Sie gTerminal und führen Sie \"pair {}\" aus",
+	"couldNotParseReqData": "Die Anfragedaten konnten nicht geparst werden.",
+	"noTOTPSecret": "Es wurde kein TOTP-Schlüssel gefunden. Führen \"{} pair\" aus und folgen Sie den Anweisungen."
+}
