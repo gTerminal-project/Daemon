@@ -5,6 +5,7 @@
 The daemon allows you to run commands on your computer from gTerminal.
 
 ### Setup
+
 1. Download the daemon for your OS from the releases page
 2. Place it whereever you want
 3. Run `./gterminal-daemon pair` (Linux & MacOS) or `gterminal-daemon.exe pair` (Windows)
